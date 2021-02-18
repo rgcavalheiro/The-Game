@@ -4,35 +4,73 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 //import java.awt.Graphics2D;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 
-public class Game extends Canvas implements Runnable {
+import com.rccode.graficos.Spritesheet;
+import com.rccode.world.World;
 
+import entities.Entity;
+import entities.Player;
 
-	/**
-	 * 
-	 */
+public class Game extends Canvas implements Runnable, KeyListener {
+
 	private static final long serialVersionUID = 1L;
 	public static JFrame frame;
 	private Thread thread;
 	private boolean isRunning = true;
-	private final int WIDTH = 160;
-	private final int HEIGHT = 120;
-	private final int SCALE = 5;
+
+	private final int WIDTH_TELA = 640;
+	private final int HEIGHT_TELA = 480;
 	
+		
+	
+	
+	
+
 	private BufferedImage image;
+
+	public List<Entity> entities;
+	public static Spritesheet spritesheet;
 	
-	
+	public static World world;
+
+	private Player player;
 
 	public Game() {
-
-		setPreferredSize(new Dimension(WIDTH * SCALE, HEIGHT * SCALE));
+		addKeyListener(this);
+		setPreferredSize(new Dimension(WIDTH_TELA, HEIGHT_TELA));
 		initFrame();
-		image = new BufferedImage(160,120,BufferedImage.TYPE_INT_RGB);
+		// Inicializando objetos
+		
+		
+		image = new BufferedImage(WIDTH_TELA, HEIGHT_TELA, BufferedImage.TYPE_INT_RGB);
+		entities = new ArrayList<Entity>();
+		spritesheet = new Spritesheet("/spritesheet.png");
+		world = new World("/map.png");
+		
+		int atual = 128;
+		int pixels = 64;
+		int total_sprites = 12;
+		
+		int[] posicaosprite = new int[total_sprites];
+
+		for (int x = 0; x < total_sprites; x++) {
+			posicaosprite[x] = atual;
+			atual += pixels;
+		}
+		
+
+		player = new Player(0, 0, 32, 32, spritesheet.getSprite(posicaosprite[0], 0, pixels, pixels));
+
+		entities.add(player);
 
 	}
 
@@ -67,44 +105,43 @@ public class Game extends Canvas implements Runnable {
 	}
 
 	public void tick() {
+		for (int i = 0; i < entities.size(); i++) {
+			Entity e = entities.get(i);
+			e.tick();
+		}
 
-	
 	}
 
 	public void render() {
 		BufferStrategy bs = this.getBufferStrategy();
-		if(bs == null) {
+		if (bs == null) {
 			this.createBufferStrategy(3);
 			return;
 		}
-		
+
 		Graphics g = image.getGraphics();
 		g.setColor(Color.black);
-		g.fillRect(0, 0, WIDTH, HEIGHT);
-		
-		
-			
-		
-		/*RENDERIZAÇÃO DO GAME
-		*/
-		
-		
-		
-//		Graphics2D g2 = (Graphics2D) g;	
-		
+		g.fillRect(0, 0, WIDTH_TELA, HEIGHT_TELA);
 
-		
-	
-		
+		/*
+		 * RENDERIZAÇÃO DO GAME
+		 */
+//		Graphics2D g2 = (Graphics2D) g;	
+		world.render(g);
+
+		for (int i = 0; i < entities.size(); i++) {
+			Entity e = entities.get(i);
+			e.render(g);
+		}
 
 		/*
 		 * 
 		 */
-		
+
 		g.dispose();
 		g = bs.getDrawGraphics();
-		g.drawImage(image, 0, 0, WIDTH*SCALE, HEIGHT*SCALE, null);
-		
+		g.drawImage(image, 0, 0, WIDTH_TELA, HEIGHT_TELA, null);
+
 		bs.show();
 	}
 
@@ -134,8 +171,46 @@ public class Game extends Canvas implements Runnable {
 			}
 
 		}
-		
+
 		stop();
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		if (e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_D) {
+			player.right = true;
+		} else if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_A) {
+			player.left = true;
+		}
+
+		if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_W) {
+			player.up = true;
+		} else if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_S) {
+			player.down = true;
+		}
+
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		if (e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_D) {
+			player.right = false;
+		} else if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_A) {
+			player.left = false;
+		}
+
+		if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_W) {
+			player.up = false;
+		} else if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_S) {
+			player.down = false;
+		}
+
 	}
 
 }
