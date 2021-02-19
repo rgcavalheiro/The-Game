@@ -3,6 +3,7 @@ package com.rccode.main;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -11,12 +12,15 @@ import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.swing.JFrame;
 
 import com.rccode.graficos.Spritesheet;
+import com.rccode.graficos.UI;
 import com.rccode.world.World;
 
+import entities.Enemy;
 import entities.Entity;
 import entities.Player;
 
@@ -27,8 +31,9 @@ public class Game extends Canvas implements Runnable, KeyListener {
 	private Thread thread;
 	private boolean isRunning = true;
 
-	private final int WIDTH_TELA = 640;
-	private final int HEIGHT_TELA = 480;
+	public static final int WIDTH = 640;
+	public static final int HEIGHT= 460;
+	private final int SCALE = 2;
 	
 		
 	
@@ -37,40 +42,44 @@ public class Game extends Canvas implements Runnable, KeyListener {
 
 	private BufferedImage image;
 
-	public List<Entity> entities;
+	public static List<Entity> entities;
+	public static List<Enemy> enemies;
 	public static Spritesheet spritesheet;
 	
 	public static World world;
 
-	private Player player;
+	public static Player player;
+	
+	public static Random rand;
+	
+	public UI ui;
 
 	public Game() {
+		rand = new Random();
 		addKeyListener(this);
-		setPreferredSize(new Dimension(WIDTH_TELA, HEIGHT_TELA));
+		setPreferredSize(new Dimension(WIDTH*SCALE, HEIGHT*SCALE));
 		initFrame();
 		// Inicializando objetos
 		
-		
-		image = new BufferedImage(WIDTH_TELA, HEIGHT_TELA, BufferedImage.TYPE_INT_RGB);
+		ui = new UI();
+		image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
 		entities = new ArrayList<Entity>();
+		enemies = new ArrayList<Enemy>();
 		spritesheet = new Spritesheet("/spritesheet.png");
-		world = new World("/map.png");
-		
-		int atual = 128;
+		int atual = 0;
 		int pixels = 64;
-		int total_sprites = 12;
-		
+		int total_sprites = 10;		
 		int[] posicaosprite = new int[total_sprites];
-
 		for (int x = 0; x < total_sprites; x++) {
 			posicaosprite[x] = atual;
-			atual += pixels;
-		}
+			atual += pixels;}
+		player = new Player(0, 0, 32, 32, spritesheet.getSprite(posicaosprite[0], 64*3, pixels, pixels));
+		entities.add(player);
+		world = new World("/map.png");
+		
 		
 
-		player = new Player(0, 0, 32, 32, spritesheet.getSprite(posicaosprite[0], 0, pixels, pixels));
 
-		entities.add(player);
 
 	}
 
@@ -121,7 +130,7 @@ public class Game extends Canvas implements Runnable, KeyListener {
 
 		Graphics g = image.getGraphics();
 		g.setColor(Color.black);
-		g.fillRect(0, 0, WIDTH_TELA, HEIGHT_TELA);
+		g.fillRect(0, 0, WIDTH, HEIGHT);
 
 		/*
 		 * RENDERIZAÇÃO DO GAME
@@ -133,14 +142,19 @@ public class Game extends Canvas implements Runnable, KeyListener {
 			Entity e = entities.get(i);
 			e.render(g);
 		}
+		
+		ui.render(g);
 
-		/*
-		 * 
-		 */
+		/***/
 
 		g.dispose();
 		g = bs.getDrawGraphics();
-		g.drawImage(image, 0, 0, WIDTH_TELA, HEIGHT_TELA, null);
+		g.drawImage(image, 0, 0, WIDTH*SCALE, HEIGHT * SCALE, null);
+		
+		g.setFont((new Font("arial",Font.BOLD,17)));
+		g.setColor(Color.black);
+		g.drawString("Blunders:"+ Player.blunder, 16,64);
+		
 
 		bs.show();
 	}
@@ -152,6 +166,7 @@ public class Game extends Canvas implements Runnable, KeyListener {
 		double delta = 0;
 		int frames = 0;
 		double timer = System.currentTimeMillis();
+		requestFocus();
 		while (isRunning) {
 			long now = System.nanoTime();
 			delta += (now - lastTime) / ns;
